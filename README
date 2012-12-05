@@ -1,0 +1,4 @@
+Scripts for interacting with Mekentosj's Papers app.
+
+Papers *has* BibTeX support, but it's not exactly stellar. These scripts make it a bit easier for authors to work with Papers-generated BibTeX.
+
