@@ -1,0 +1,49 @@
+#!/bin/sh
+
+FILES=$*
+if [ "${FILES}" == "" ]; then
+	echo "usage: $0 <bibtex files>"
+	exit 1
+fi
+
+echo "FILES: $FILES"
+FIELDS="abstract address affiliation annote date-.* file keywords language local-url organization rating read uri"
+
+for filename in $FILES;
+do
+	echo $filename
+	current=$filename
+
+	# Remove one-line fields.
+	for field in $FIELDS
+	do
+		tmp=`mktemp -t bibtrim`
+		grep -v "^$field =" $current > $tmp
+		current=$tmp
+	done
+
+	# Clean up orphaned lines (e.g. from multi-line abstracts).
+	tmp=`mktemp -t bibtrim`
+	grep -v '^[^@}][^=]\+$' $current > $tmp
+	current=$tmp
+
+	tmp=`mktemp -t bibtrim`
+	grep -v '^},$' $current > $tmp
+	current=$tmp
+
+	# Fix bizarre ACM publisher stuff.
+	#
+	# It's really annoying that Papers will hold fields that you can't edit:
+	# somewhere in the database there is a field that gets populated with
+	# "ACM  Request Permissions", but I can't tell where, and I can't edit it
+	# unless I choose the right document/series type first. It's easier to just
+	# clean up the resulting BibTeX.
+	sed -i .backup 's/{ ACM  Request Permissions}/{ACM}/' $current
+
+	colordiff -u $filename $current
+	mv $tmp $filename
+done
+
+# Remove all temporary files.
+rm $TMPDIR/bibtrim.*
+
